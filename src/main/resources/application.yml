@@ -1,0 +1,30 @@
+defaults-iban-properties:
+  country: DE
+  size: 22
+  withWhiteSpace: false
+countries-iban-properties:
+  country:
+    -
+      name: Deuscthland
+      code: DE
+      size: 22
+      withWhiteSpace: true
+    -
+      name: Belgium
+      code: BE
+      size: 16
+      withWhiteSpace: false
+    -
+      name: Frankreich
+      code: FR
+      size: 18
+      withWhiteSpace: true
+black-listed:
+  ibans:
+    - DE00000000033333333343441
+    - DE27983773766664555355553
+    - DE27983773766664555355500
+  countries:
+    - BE
+    - FR
+
