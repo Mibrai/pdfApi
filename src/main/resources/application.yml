@@ -22,8 +22,8 @@ countries-iban-properties:
 black-listed:
   ibans:
     - DE00000000033333333343441
-    - DE27983773766664555355553
-    - DE27983773766664555355500
+    - DE27983773766664555355
+    - DE27 9837 7376 6664 5553 50
   countries:
     - BE
     - FR

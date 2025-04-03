@@ -1,56 +1,61 @@
 package sad.test.pdfscan.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import sad.test.pdfscan.config.BlackListedProperties;
 import sad.test.pdfscan.config.CountriesIbanProperties;
 import sad.test.pdfscan.config.DefaultIbanProperties;
-import sad.test.pdfscan.model.Country;
 import sad.test.pdfscan.services.PdfServiceImpl;
+import sad.test.pdfscan.utils.Constants;
+import sad.test.pdfscan.utils.StringUtils;
 
-import java.util.List;
-import java.util.Map;
-
-@Controller
+@RestController
 public class MainController {
-
-    public static String FILE_URL = "C:\\Users\\paric\\Downloads\\PROJEKT\\Programmierungskurs\\pdfScan\\src\\main\\resources\\static\\test.pdf";
-
-    @Autowired
-    DefaultIbanProperties config;
-
-    @Autowired
-    CountriesIbanProperties countriesIbanProperties;
-
-    @Autowired
-    BlackListedProperties blackListedProperties;
-
-    @Autowired
-    DefaultIbanProperties defaultIbanProperties;
 
     @Autowired
     PdfServiceImpl pdfService;
 
     @GetMapping(value = "/home")
-    private String loadHome(
-    ) throws InterruptedException {
+    private ResponseEntity loadHome(
+            final ModelMap modelMap
+            ) throws InterruptedException {
 
-        pdfService.getPdfFile("https://room4-solutions.com/testApi/Testdata_Invoices.pdf",
-                FILE_URL);
+       /* pdfService.downloadAndStorePdf(Constants.PDF_TEST_LINK,
+                Constants.FILE_URL);
 
 
         Thread.sleep(2000);
-        pdfService.pdfExist(FILE_URL, defaultIbanProperties, blackListedProperties);
-        return "home";
+        return  pdfService.checkBlacklistedIban(Constants.FILE_URL,
+                (DefaultIbanProperties) modelMap.getAttribute("ibanProperties"),
+                (BlackListedProperties) modelMap.getAttribute("blackListedIbanOrCountries"));*/
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Boommm");
     }
 
-    @PostMapping("/scanUrl")
-    private String processUrl(@RequestBody String url){
+    @PostMapping("/checkBlacklistedIban")
+    private ResponseEntity processUrl(
+            @RequestParam(name = "pdfUrl") String url,
+            @RequestParam(name = "ibanCountryCode", required = false) String countryCode,
+            final ModelMap modelMap) throws InterruptedException {
 
-        return "Response : " +url;
+         String currentStoreUrl = StringUtils.generateFileName(Constants.FILE_URL);
+
+        ResponseEntity response =  pdfService.downloadAndStorePdf(StringUtils.validUrl(url), currentStoreUrl);
+        if(response.getStatusCode().is2xxSuccessful()) {
+            Thread.sleep(2000);
+            response = pdfService.checkBlacklistedIban(countryCode,
+                    currentStoreUrl,
+                    (DefaultIbanProperties) modelMap.getAttribute("ibanProperties"),
+                    (BlackListedProperties) modelMap.getAttribute("blackListedIbanOrCountries"),
+                    (CountriesIbanProperties) modelMap.getAttribute("countriesIbanProperties"));
+
+        }
+        pdfService.deleteFile(currentStoreUrl);
+        return response;
     }
 }
