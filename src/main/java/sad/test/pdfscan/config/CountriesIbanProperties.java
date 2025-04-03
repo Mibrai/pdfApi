@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import sad.test.pdfscan.model.Country;
 
 import java.util.List;
-import java.util.Map;
 
 @Configuration
 @EnableConfigurationProperties
