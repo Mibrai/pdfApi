@@ -48,7 +48,7 @@ public class StringUtils {
                                                final DefaultIbanProperties defaultIbanProperties,
                                                final CountriesIbanProperties countriesIbanProperties,
                                                final String iban){
-        if (countryCode != null && !countryCode.isBlank()) {
+        if (countryCode != null && !countryCode.isBlank() && countriesIbanProperties != null) {
             Optional<Country> country = countriesIbanProperties.getCountry().stream()
                     .filter(country1 -> country1.getCode().equalsIgnoreCase(countryCode)).findFirst();
             if (country.isEmpty())
@@ -70,7 +70,10 @@ public class StringUtils {
      * @return
      */
     private static boolean matchSpec(final DefaultIbanProperties defaultIbanProperties, final String iban){
-        if(defaultIbanProperties.getCountry().equalsIgnoreCase(iban.substring(0,2))){
+        if(defaultIbanProperties != null &&
+                iban != null &&
+                !iban.isBlank() &&
+                defaultIbanProperties.getCountry().equalsIgnoreCase(iban.substring(0,2))){
             if(defaultIbanProperties.isWithWhiteSpace()){
                return iban.replaceAll(" ","").length() == defaultIbanProperties.getSize();
             } else {
@@ -86,7 +89,7 @@ public class StringUtils {
      * @return
      */
     public static String extractIban(String pageText){
-        if(pageText.contains("IBAN:")){
+        if(pageText != null && pageText.contains("IBAN:")){
             // e.g :  IBAN:  DE15 3006 0601 0505 7807 80
             String[] ibanArray = pageText.split(":");
             if(ibanArray.length == 2){
@@ -105,6 +108,10 @@ public class StringUtils {
      */
     public static boolean isBlackListed(final String iban, final BlackListedProperties blackListedProperties){
         boolean state = false;
+
+        if(iban == null || iban.isBlank())
+            return false;
+
         String blockIban = iban.trim().replaceAll(" ","");
 
         if(blackListedProperties.getIbans().contains(blockIban) ||
