@@ -58,4 +58,14 @@ public class StringUtilsTest {
         Truth.assertThat(StringUtils.isBlackListed(null,blackListedProperties)).isFalse();
         Truth.assertThat(StringUtils.isBlackListed("12345",blackListedProperties)).isFalse();
     }
+
+    @Test
+    void validUrlTest(){
+        StringBuilder urlBuilder = new StringBuilder("test.de");
+        Truth.assertThat(StringUtils.validUrl(urlBuilder.toString()).contains("https")).isTrue();
+        urlBuilder.insert(0,"http://");
+        Truth.assertThat(StringUtils.validUrl(urlBuilder.toString()).contains("https")).isFalse();
+        Truth.assertThat(StringUtils.validUrl("test.de.https://")).isNull();
+        Truth.assertThat(StringUtils.validUrl("testhttp://test.de")).isNull();
+    }
 }

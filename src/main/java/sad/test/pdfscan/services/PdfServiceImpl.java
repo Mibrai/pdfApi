@@ -47,19 +47,22 @@ public class PdfServiceImpl implements  PdfService{
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 1; i <= numberOfPage; i++){
                 String pageText = PdfTextExtractor.getTextFromPage(pdfReader,i);
-                if(StringUtils.textContainIban(pageText, Constants.IBAN)){
-                    int initPositionIban = StringUtils.getIndexOfString(pageText,Constants.IBAN);
-                    int endPositionIban = StringUtils.getIndexOfString(pageText,Constants.SWIFT);
-                    String iban = pageText.substring(initPositionIban,endPositionIban).trim();
-                    String extractedIban = StringUtils.extractIban(iban);
-                    boolean matchSpec = StringUtils.ibanMatchCountrySpec(countryCode,
-                            defaultIbanProperties,countriesIbanProperties,extractedIban);
-                    if(matchSpec){
-                        if(StringUtils.isBlackListed(extractedIban,blackListedProperties))
-                            if(!stringBuilder.toString().contains(extractedIban))
-                                stringBuilder.append("IBAN: " + extractedIban + " , is blacklisted : true \n\n" );
-                    } else {
-                        state.append("IBAN: " + extractedIban + " don't match the IBAN specification for current country");
+                if(pageText.contains(Constants.IBAN)){
+                    int initPositionIban = pageText.indexOf(Constants.IBAN);
+
+                    if(initPositionIban != -1){
+                        int endPositionIban = pageText.indexOf(Constants.SWIFT);
+                        String iban = pageText.substring(initPositionIban,endPositionIban).trim();
+                        String extractedIban = StringUtils.extractIban(iban);
+                        boolean matchSpec = StringUtils.ibanMatchCountrySpec(countryCode,
+                                defaultIbanProperties,countriesIbanProperties,extractedIban);
+                        if(matchSpec){
+                            if(StringUtils.isBlackListed(extractedIban,blackListedProperties))
+                                if(!stringBuilder.toString().contains(extractedIban))
+                                    stringBuilder.append("IBAN: " + extractedIban + " , is blacklisted : true \n\n" );
+                        } else {
+                            state.append("IBAN: " + extractedIban + " don't match the IBAN specification for current country");
+                        }
                     }
                 }
             }

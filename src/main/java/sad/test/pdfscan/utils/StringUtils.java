@@ -9,32 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class StringUtils {
-
-    /**
-     * return index of String-fragment in original-string
-     * @param original
-     * @param stringToFind
-     * @return
-     */
-    public static int getIndexOfString(String original , String stringToFind){
-        int index = 0;
-        if(!original.isBlank() && !original.isEmpty()){
-           return original.indexOf(stringToFind);
-        }
-        return index;
-    }
-
-    /**
-     * find String-fragment in an original-String
-     * in our case the String-fragment is IBAN:
-     * @param original
-     * @param strToFind
-     * @return
-     */
-    public static boolean textContainIban(String original, String strToFind){
-        return !original.isBlank() && original.contains(strToFind);
-    }
-
     /**
      * Check if any Country is given, when not the default Country-Spec will be used
      * The default-size and default-withWhiteSpace are used only when the default-Contry Code not exist in the countries-iban-properties
@@ -142,8 +116,18 @@ public class StringUtils {
      */
     public static String validUrl(String url){
         StringBuilder stringBuilder = new StringBuilder();
-        if(!url.contains("http://") && !url.contains("https://")){
-            stringBuilder.append("https://");
+        if(!url.contains(Constants.HTTP) && !url.contains(Constants.HTTPS)){
+            stringBuilder.append(Constants.HTTPS);
+        }
+
+        if(url.contains(Constants.HTTPS)
+                && url.indexOf(Constants.HTTPS) != 0  ){
+            return null;
+        }
+
+        if(url.contains(Constants.HTTP)
+                && url.indexOf(Constants.HTTP) != 0  ){
+            return null;
         }
         stringBuilder.append(url);
         return stringBuilder.toString();
