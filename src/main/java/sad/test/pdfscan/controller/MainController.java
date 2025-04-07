@@ -45,7 +45,13 @@ public class MainController {
 
          String currentStoreUrl = StringUtils.generateFileName(Constants.FILE_URL);
 
-        ResponseEntity response =  pdfService.downloadAndStorePdf(StringUtils.validUrl(url), currentStoreUrl);
+         String checkedUrl = StringUtils.validUrl(url);
+
+         if(checkedUrl == null){
+             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Invalid URL : " + checkedUrl);
+         }
+
+        ResponseEntity response =  pdfService.downloadAndStorePdf(checkedUrl, currentStoreUrl);
         if(response.getStatusCode().is2xxSuccessful()) {
             Thread.sleep(2000);
             response = pdfService.checkBlacklistedIban(countryCode,
