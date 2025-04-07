@@ -5,48 +5,59 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import sad.test.pdfscan.config.BlackListedProperties;
-import sad.test.pdfscan.config.CountriesIbanProperties;
-import sad.test.pdfscan.config.DefaultIbanProperties;
+import sad.test.pdfscan.config.CountriesSpecificationProperties;
+import sad.test.pdfscan.config.DefaultSpecificationProperties;
+import sad.test.pdfscan.model.CheckElement;
 
 @SpringBootTest
 public class StringUtilsTest {
 
     @Autowired
-    DefaultIbanProperties defaultIbanProperties;
+    DefaultSpecificationProperties defaultSpecificationProperties;
 
     @Autowired
-    CountriesIbanProperties countriesIbanProperties;
+    CountriesSpecificationProperties countriesSpecificationProperties;
 
     @Autowired
     BlackListedProperties blackListedProperties;
 
     private static final String IBAN = "DE27 9837 7376 6664 5553 50";
     private static final String ALLOWED_IBAN = "DE27 9837 7376 6664 5553 60";
+
+
     @Test
-    void ibanMatchCountrySpecTest(){
+    void elementMatchCountrySpecTest(){
+        CheckElement checkElement = CheckElement.builder()
+                .name("IBAN")
+                .lastString("SWIFT")
+                .withWhiteSpace(false)
+                .size(22)
+                .initialString("IBAN:")
+                .build();
         //test empty country code
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("",defaultIbanProperties,countriesIbanProperties,"")).isFalse();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("", defaultSpecificationProperties, countriesSpecificationProperties,"",checkElement)).isFalse();
         //test with null defaultIbanProperties and null countriesIbanProperties
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("",null,countriesIbanProperties,"")).isFalse();
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("DE",null,null,IBAN)).isFalse();
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec(null,defaultIbanProperties,null,IBAN)).isTrue();
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec(null,null,null,IBAN)).isFalse();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("",null, countriesSpecificationProperties,"",checkElement)).isFalse();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("DE",null,null,IBAN,checkElement)).isFalse();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec(null, defaultSpecificationProperties,null,IBAN,checkElement)).isTrue();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec(null,null,null,IBAN,checkElement)).isFalse();
         //match country code and country size
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("DE",defaultIbanProperties,countriesIbanProperties,IBAN)).isTrue();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("DE", defaultSpecificationProperties, countriesSpecificationProperties,IBAN,checkElement)).isTrue();
         //don't match country code
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("DE",defaultIbanProperties,countriesIbanProperties,IBAN.replaceAll("DE","FR"))).isFalse();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("DE", defaultSpecificationProperties, countriesSpecificationProperties,IBAN.replaceAll("DE","FR"),checkElement)).isFalse();
         //match country code but don't match country size
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("FR",defaultIbanProperties,countriesIbanProperties,IBAN.replaceAll("DE","FR"))).isFalse();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("FR", defaultSpecificationProperties, countriesSpecificationProperties,IBAN.replaceAll("DE","FR"),checkElement)).isFalse();
         //match country code and country size
-        Truth.assertThat(StringUtils.ibanMatchCountrySpec("FR",defaultIbanProperties,countriesIbanProperties,IBAN.replaceAll("DE","FR").substring(0,22))).isTrue();
+        Truth.assertThat(StringUtils.elementMatchCountrySpec("FR", defaultSpecificationProperties, countriesSpecificationProperties,IBAN.replaceAll("DE","FR").substring(0,22),checkElement)).isTrue();
     }
 
     @Test
-    void extractIbanTest(){
+    void extractElementTest(){
+        String initialString = "IBAN:";
         StringBuilder stringBuilder = new StringBuilder("IBAN:");
-        Truth.assertThat(StringUtils.extractIban("").isBlank()).isTrue();
-        Truth.assertThat(StringUtils.extractIban(null) == null).isTrue();
-        Truth.assertThat(StringUtils.extractIban(stringBuilder.append(IBAN).toString()).contains("IBAN:")).isFalse();
+        Truth.assertThat(StringUtils.extractElementInfos("",initialString).isBlank()).isTrue();
+        Truth.assertThat(StringUtils.extractElementInfos(null,initialString) == null).isTrue();
+        Truth.assertThat(StringUtils.extractElementInfos(stringBuilder.append(IBAN).toString(),initialString).contains("IBAN:")).isFalse();
     }
 
     @Test

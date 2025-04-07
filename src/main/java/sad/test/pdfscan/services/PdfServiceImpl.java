@@ -3,22 +3,31 @@ package sad.test.pdfscan.services;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import org.apache.commons.io.FileDeleteStrategy;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import sad.test.pdfscan.config.BlackListedProperties;
-import sad.test.pdfscan.config.CountriesIbanProperties;
-import sad.test.pdfscan.config.DefaultIbanProperties;
-import sad.test.pdfscan.utils.Constants;
+import sad.test.pdfscan.config.CountriesSpecificationProperties;
+import sad.test.pdfscan.config.DefaultSpecificationProperties;
+import sad.test.pdfscan.model.CheckElement;
 import sad.test.pdfscan.utils.StringUtils;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 public class PdfServiceImpl implements  PdfService{
+
+    private final MessageSource messageSource;
+
+    public PdfServiceImpl(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
 
     /**
      * Take a valid url of a Pdf and read all text of all page to find IBAN
@@ -27,53 +36,71 @@ public class PdfServiceImpl implements  PdfService{
      * the exact Iban will be check if it matchs the Country Specification (Code, Size, withWitheSpace between or not)
      * The differents Specifications are in our Config file (application.yml)
      * @param url
-     * @param defaultIbanProperties
+     * @param defaultSpecificationProperties
      * @param blackListedProperties
      * @return
      */
     @Override
-    public ResponseEntity checkBlacklistedIban(
+    public ResponseEntity checkSpecifications(
             final String countryCode,
             final String url,
-            final DefaultIbanProperties defaultIbanProperties,
+            final DefaultSpecificationProperties defaultSpecificationProperties,
             final BlackListedProperties blackListedProperties,
-            final CountriesIbanProperties countriesIbanProperties) {
+            final CountriesSpecificationProperties countriesSpecificationProperties,
+            final List<CheckElement> checkElementList) {
 
         StringBuilder state = new StringBuilder();
+        String country = countryCode == null ? "EN" : countryCode;
+        Locale locale = new Locale(country.toLowerCase(), country.toLowerCase());
         try{
             Thread.sleep(1000);
             PdfReader pdfReader = new PdfReader(url);
-            int numberOfPage = pdfReader.getNumberOfPages();
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 1; i <= numberOfPage; i++){
-                String pageText = PdfTextExtractor.getTextFromPage(pdfReader,i);
-                if(pageText.contains(Constants.IBAN)){
-                    int initPositionIban = pageText.indexOf(Constants.IBAN);
+            List<String> pdfStrings = StringUtils.getAllPdfTextAsList(pdfReader);
+            pdfReader.close();
+                for (String pageText : pdfStrings){
+                        //iterate the checkElementList here
+                        checkElementList.stream().forEach(checkElement -> {
+                            if(pageText != null && pageText.contains(checkElement.getInitialString())){
+                                int initStringPosition = pageText.indexOf(checkElement.getInitialString());
 
-                    if(initPositionIban != -1){
-                        int endPositionIban = pageText.indexOf(Constants.SWIFT);
-                        String iban = pageText.substring(initPositionIban,endPositionIban).trim();
-                        String extractedIban = StringUtils.extractIban(iban);
-                        boolean matchSpec = StringUtils.ibanMatchCountrySpec(countryCode,
-                                defaultIbanProperties,countriesIbanProperties,extractedIban);
-                        if(matchSpec){
-                            if(StringUtils.isBlackListed(extractedIban,blackListedProperties))
-                                if(!stringBuilder.toString().contains(extractedIban))
-                                    stringBuilder.append("IBAN: " + extractedIban + " , is blacklisted : true \n\n" );
-                        } else {
-                            state.append("IBAN: " + extractedIban + " don't match the IBAN specification for current country");
-                        }
-                    }
+                                if(initStringPosition != -1){
+                                    int endStringPosition = pageText.indexOf(checkElement.getLastString());
+                                    String element = pageText.substring(initStringPosition,endStringPosition).trim();
+                                    String extractedElementInfo = StringUtils.extractElementInfos(element,checkElement.getInitialString());
+                                    boolean matchSpec = StringUtils.elementMatchCountrySpec(
+                                            countryCode,
+                                            defaultSpecificationProperties,
+                                            countriesSpecificationProperties,
+                                            extractedElementInfo,
+                                            checkElement);
+
+                                    if(matchSpec){
+                                        if(StringUtils.isBlackListed(extractedElementInfo,blackListedProperties))
+                                            if(!state.toString().contains(extractedElementInfo))
+                                                state.append(messageSource.getMessage("log.blacklisted",
+                                                        new Object[]{checkElement.getName() + ": ",extractedElementInfo},
+                                                        locale));
+                                    } else {
+                                        if(!state.toString().contains(extractedElementInfo))
+                                            state.append(messageSource.getMessage("log.nomatch",
+                                                    new Object[]{extractedElementInfo,checkElement.getName()},
+                                                    locale));
+                                    }
+                                }
+                            }
+                        });
+                       //End forEach
                 }
-            }
 
-            if(stringBuilder.isEmpty()){
-                return ResponseEntity.ok(state.isEmpty() ? "No blacklisted Iban found" : state);
+            if(state.isEmpty()){
+                return ResponseEntity.ok(state.isEmpty() ? messageSource.getMessage("log.notfound",null,locale) : state);
             } else {
-                return ResponseEntity.status(HttpStatus.ACCEPTED).body(stringBuilder);
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body(state);
             }
-        } catch (IOException ex){
-            state.append("File not found  : "+ex.getMessage());
+        }catch (IOException e) {
+            state.append(messageSource.getMessage("log.file.notfound",
+                    new Object[]{e.getMessage()},
+                    locale));
         } catch (InterruptedException e) {
             state.append("\n" + "Interruption Exception + " + e.getMessage());
         }
@@ -88,8 +115,9 @@ public class PdfServiceImpl implements  PdfService{
      */
     @Async
     @Override
-    public ResponseEntity downloadAndStorePdf(String url, String store) {
+    public ResponseEntity downloadAndStorePdf(final String countryCode ,final String url,final String store) {
             StringBuilder state = new StringBuilder();
+        Locale locale = new Locale(countryCode.toLowerCase(), countryCode.toLowerCase());
         try{
             URL pdfUrl = new URL(url);
             URLConnection urlConnection = pdfUrl.openConnection();
@@ -108,15 +136,21 @@ public class PdfServiceImpl implements  PdfService{
                 inputStream.close();
                 return ResponseEntity.ok("Pdf downloaded and stored");
             } else {
-                state.append("Valid PDF file not found at the given Adress : "+ pdfUrl);
+                state.append(messageSource.getMessage("log.file.invalid",
+                        new Object[]{pdfUrl},
+                        locale));
             }
 
         } catch(FileNotFoundException ex){
-            state.append("File not foud at : " + store + " \n msg : "+ex.getMessage());
+            state.append(messageSource.getMessage("log.file.notfound",
+                    new Object[]{store},
+                    locale));
         } catch (IOException ex){
             state.append("IO Exeption : "+ ex.getMessage());
         } catch (Exception ex){
-            state.append("Can't reach pdf file : "+ ex.getMessage());
+            state.append(messageSource.getMessage("log.file.noaccess",
+                    new Object[]{ex.getMessage()},
+                    locale));
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(state);
     }
