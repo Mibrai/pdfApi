@@ -1,10 +1,17 @@
 package sad.test.pdfscan.utils;
 
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import sad.test.pdfscan.config.BlackListedProperties;
-import sad.test.pdfscan.config.CountriesIbanProperties;
-import sad.test.pdfscan.config.DefaultIbanProperties;
+import sad.test.pdfscan.config.CountriesSpecificationProperties;
+import sad.test.pdfscan.config.DefaultSpecificationProperties;
+import sad.test.pdfscan.model.CheckElement;
 import sad.test.pdfscan.model.Country;
 
+import javax.imageio.IIOException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,47 +20,58 @@ public class StringUtils {
      * Check if any Country is given, when not the default Country-Spec will be used
      * The default-size and default-withWhiteSpace are used only when the default-Contry Code not exist in the countries-iban-properties
      * @param countryCode
-     * @param defaultIbanProperties
-     * @param countriesIbanProperties
-     * @param iban
+     * @param defaultSpecificationProperties
+     * @param countriesSpecificationProperties
+     * @param element
      * @return boolean true if the given Iban matchs the Specifications of the given Country or DefaultCountry
      */
-    public static boolean ibanMatchCountrySpec(final String countryCode,
-                                               final DefaultIbanProperties defaultIbanProperties,
-                                               final CountriesIbanProperties countriesIbanProperties,
-                                               final String iban){
-        if (countryCode != null && !countryCode.isBlank() && countriesIbanProperties != null) {
-            Optional<Country> country = countriesIbanProperties.getCountry().stream()
+    public static boolean elementMatchCountrySpec(final String countryCode,
+                                                  final DefaultSpecificationProperties defaultSpecificationProperties,
+                                                  final CountriesSpecificationProperties countriesSpecificationProperties,
+                                                  final String element,
+                                                  final CheckElement checkElement){
+        if (countryCode != null && !countryCode.isBlank() && countriesSpecificationProperties != null) {
+            Optional<Country> country = countriesSpecificationProperties.getCountry().stream()
                     .filter(country1 -> country1.getCode().equalsIgnoreCase(countryCode)).findFirst();
             if (country.isEmpty())
                 return false;
 
-            defaultIbanProperties.setCountry(country.get().getCode());
-            defaultIbanProperties.setSize(country.get().getSize());
-            defaultIbanProperties.setWithWhiteSpace(country.get().isWithWhiteSpace());
+            defaultSpecificationProperties.setCountry(country.get().getCode());
+            defaultSpecificationProperties.setSize(country.get().getSize());
+            defaultSpecificationProperties.setWithWhiteSpace(country.get().isWithWhiteSpace());
         }
-        return matchSpec(defaultIbanProperties, iban);
+        return matchSpec(defaultSpecificationProperties, element, checkElement);
 
     }
 
     /**
-     * Check if Iban contains the Country-Code
+     * Check if element contains the Country-Code
      * Check if by size-verification the whiteSpace into Iban must be count or not
-     * @param defaultIbanProperties
-     * @param iban
+     * @param defaultSpecificationProperties
+     * @param element
      * @return
      */
-    private static boolean matchSpec(final DefaultIbanProperties defaultIbanProperties, final String iban){
-        if(defaultIbanProperties != null &&
-                iban != null &&
-                !iban.isBlank() &&
-                defaultIbanProperties.getCountry().equalsIgnoreCase(iban.substring(0,2))){
-            if(defaultIbanProperties.isWithWhiteSpace()){
-               return iban.replaceAll(" ","").length() == defaultIbanProperties.getSize();
-            } else {
-                return iban.length() == (defaultIbanProperties.getSize() + (int)(defaultIbanProperties.getSize() / 4));
+    private static boolean matchSpec(final DefaultSpecificationProperties defaultSpecificationProperties,
+                                     final String element,
+                                     final CheckElement checkElement){
+
+        if(checkElement.getName().contains(Constants.IBAN)){
+            if(defaultSpecificationProperties != null &&
+                    element != null &&
+                    !element.isBlank() &&
+                    defaultSpecificationProperties.getCountry().equalsIgnoreCase(element.substring(0,2))){
+                if(defaultSpecificationProperties.isWithWhiteSpace()){
+                    return element.replaceAll(" ","").length() == defaultSpecificationProperties.getSize();
+                } else {
+                    return element.length() == (defaultSpecificationProperties.getSize() + (int)(defaultSpecificationProperties.getSize() / 4));
+                }
             }
         }
+
+        if(!checkElement.getName().contains(Constants.IBAN)){
+            return element.length() == checkElement.getSize();
+        }
+
         return false;
     }
 
@@ -62,8 +80,8 @@ public class StringUtils {
      * @param pageText
      * @return
      */
-    public static String extractIban(String pageText){
-        if(pageText != null && pageText.contains("IBAN:")){
+    public static String extractElementInfos(final String pageText, final String initialString){
+        if(pageText != null && pageText.contains(initialString)){
             // e.g :  IBAN:  DE15 3006 0601 0505 7807 80
             String[] ibanArray = pageText.split(":");
             if(ibanArray.length == 2){
@@ -74,25 +92,25 @@ public class StringUtils {
     }
 
     /**
-     * We have defined two to blacklist an Iban :  trouth Country or exact listed Iban
-     * we check if the given Iban are in the both case
-     * @param iban
+     * We have defined two cases in which the item is blacklisted: through the country of origin or the fixed blacklist.
+     * we check if the given element are in the both case
+     * @param element
      * @param blackListedProperties
      * @return
      */
-    public static boolean isBlackListed(final String iban, final BlackListedProperties blackListedProperties){
+    public static boolean isBlackListed(final String element, final BlackListedProperties blackListedProperties){
         boolean state = false;
 
-        if(iban == null || iban.isBlank())
+        if(element == null || element.isBlank())
             return false;
 
-        String blockIban = iban.trim().replaceAll(" ","");
+        String blockIban = element.trim().replaceAll(" ","");
 
         if(blackListedProperties.getIbans().contains(blockIban) ||
-                blackListedProperties.getIbans().contains(iban.trim()))
+                blackListedProperties.getIbans().contains(element.trim()))
             state = true;
 
-        if(blackListedProperties.getCountries().contains(iban.trim().substring(0,2)))
+        if(blackListedProperties.getCountries().contains(element.trim().substring(0,2)))
             state = true;
 
         return state;
@@ -131,5 +149,24 @@ public class StringUtils {
         }
         stringBuilder.append(url);
         return stringBuilder.toString();
+    }
+
+    /**
+     *
+     * @param pdfReader
+     * @return
+     */
+    public static List<String> getAllPdfTextAsList(final PdfReader pdfReader){
+        List<String> pdfTexts = new ArrayList<>();
+        try {
+            int numberOfPage = pdfReader.getNumberOfPages();
+            for (int i = 1; i <= numberOfPage; i++ ){
+                pdfTexts.add(PdfTextExtractor.getTextFromPage(pdfReader,i));
+            }
+        } catch (IOException e) {
+            //
+        }
+
+        return pdfTexts;
     }
 }

@@ -2,10 +2,11 @@ package sad.test.pdfscan.advice;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import sad.test.pdfscan.config.BlackListedProperties;
-import sad.test.pdfscan.config.Config;
-import sad.test.pdfscan.config.CountriesIbanProperties;
-import sad.test.pdfscan.config.DefaultIbanProperties;
+import sad.test.pdfscan.config.*;
+import sad.test.pdfscan.model.CheckElement;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @ControllerAdvice
@@ -17,17 +18,20 @@ public class GlobalControllerAdvice {
     private BlackListedProperties blackListedProperties;
 
     @Autowired
-    private CountriesIbanProperties countriesIbanProperties;
+    private CountriesSpecificationProperties countriesSpecificationProperties;
 
     @Autowired
-    private DefaultIbanProperties defaultIbanProperties;
+    private DefaultSpecificationProperties defaultSpecificationProperties;
+
+    @Autowired
+    private CheckSpecifications checkSpecifications;
     public GlobalControllerAdvice(Config config) {
         this.config = config;
     }
 
-    @ModelAttribute(name = "ibanProperties")
-    public DefaultIbanProperties getDefaultIbanProperties(){
-        return config.getIbanProperties(defaultIbanProperties,countriesIbanProperties);
+    @ModelAttribute(name = "defaultProperties")
+    public DefaultSpecificationProperties getDefaultProperties(){
+        return config.getIbanProperties(defaultSpecificationProperties, countriesSpecificationProperties);
     }
 
     @ModelAttribute(name = "blackListedIbanOrCountries")
@@ -35,9 +39,16 @@ public class GlobalControllerAdvice {
         return blackListedProperties;
     }
 
-    @ModelAttribute(name = "countriesIbanProperties")
-    public CountriesIbanProperties getCountriesIbanProperties(){
-        return countriesIbanProperties;
+    @ModelAttribute(name = "countriesSpecProperties")
+    public CountriesSpecificationProperties getCountriesSpecProperties(){
+        return countriesSpecificationProperties;
     }
 
+    @ModelAttribute(name = "checkSpecifications")
+    public CheckSpecifications getCheckSpecifications(){return checkSpecifications;}
+
+    @ModelAttribute(name = "currentCheckSpecifications")
+    public List<CheckElement> getCurrentCheckElements(){
+        return checkSpecifications.getElements().stream().filter(checkElement -> checkSpecifications.getActiveElementsToCheck().contains(checkElement.getName())).collect(Collectors.toList());
+    }
 }

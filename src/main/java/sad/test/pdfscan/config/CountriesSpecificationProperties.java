@@ -9,8 +9,8 @@ import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "countries-iban-properties")
-public class CountriesIbanProperties {
+@ConfigurationProperties(prefix = "countries-spec-properties")
+public class CountriesSpecificationProperties {
     private List<Country> country;
 
     public List<Country> getCountry() {

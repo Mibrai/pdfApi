@@ -10,41 +10,41 @@ public class Config {
     /**
      * Get default Iban Properties to be use
      * default-size and default-withWitheSpace will be used only when the default-country not exist in countries-iban-properties
-     * @param defaultIbanProperties
-     * @param countriesIbanProperties
+     * @param defaultSpecificationProperties
+     * @param countriesSpecificationProperties
      * @return
      */
-    public DefaultIbanProperties getIbanProperties(final DefaultIbanProperties defaultIbanProperties,
-                                                    final CountriesIbanProperties countriesIbanProperties){
-        if(countryPropertiesExist(defaultIbanProperties.getCountry(),countriesIbanProperties)){
-            Country country = getCountryProperties(defaultIbanProperties.getCountry(),countriesIbanProperties).get();
-            DefaultIbanProperties defaultIbanProperties1 = new DefaultIbanProperties();
-            defaultIbanProperties1.setCountry(country.getCode());
-            defaultIbanProperties1.setSize(country.getSize());
-            defaultIbanProperties1.setWithWhiteSpace(country.isWithWhiteSpace());
+    public DefaultSpecificationProperties getIbanProperties(final DefaultSpecificationProperties defaultSpecificationProperties,
+                                                            final CountriesSpecificationProperties countriesSpecificationProperties){
+        if(countryPropertiesExist(defaultSpecificationProperties.getCountry(), countriesSpecificationProperties)){
+            Country country = getCountryProperties(defaultSpecificationProperties.getCountry(), countriesSpecificationProperties).get();
+            DefaultSpecificationProperties defaultSpecificationProperties1 = new DefaultSpecificationProperties();
+            defaultSpecificationProperties1.setCountry(country.getCode());
+            defaultSpecificationProperties1.setSize(country.getSize());
+            defaultSpecificationProperties1.setWithWhiteSpace(country.isWithWhiteSpace());
 
-            return  defaultIbanProperties1;
+            return defaultSpecificationProperties1;
         }
-        return defaultIbanProperties;
+        return defaultSpecificationProperties;
     }
 
     /**
      * check if Country has Iban-Specification
      * @param countryCode
-     * @param countriesIbanProperties
+     * @param countriesSpecificationProperties
      * @return
      */
-    private boolean countryPropertiesExist(String countryCode, final CountriesIbanProperties countriesIbanProperties){
-        return countriesIbanProperties.getCountry().stream().anyMatch(country -> country.getCode().equalsIgnoreCase(countryCode));
+    private boolean countryPropertiesExist(String countryCode, final CountriesSpecificationProperties countriesSpecificationProperties){
+        return countriesSpecificationProperties.getCountry().stream().anyMatch(country -> country.getCode().equalsIgnoreCase(countryCode));
     }
 
     /**
      * Get Country Spec-Properties
      * @param countryCode
-     * @param countriesIbanProperties
+     * @param countriesSpecificationProperties
      * @return
      */
-    private Optional<Country> getCountryProperties(String countryCode, final CountriesIbanProperties countriesIbanProperties){
-        return countriesIbanProperties.getCountry().stream().filter(country -> country.getCode().equalsIgnoreCase(countryCode)).findFirst();
+    private Optional<Country> getCountryProperties(String countryCode, final CountriesSpecificationProperties countriesSpecificationProperties){
+        return countriesSpecificationProperties.getCountry().stream().filter(country -> country.getCode().equalsIgnoreCase(countryCode)).findFirst();
     }
 }
