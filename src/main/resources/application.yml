@@ -31,10 +31,10 @@ black-listed:
 check-specification:
    activeElementsToCheck:
      -  IBAN
-     -  BLZ
-     -  BANK
-     -  KONTO
-     -  BIC
+#     -  BLZ
+#     -  BANK
+#    -  KONTO
+#     -  BIC
    elements:
      -
        name: IBAN
@@ -47,7 +47,7 @@ check-specification:
          - DE00000000033333333343441
          - DE27983773766664555355
          - DE27 9837 7376 6664 5553 50
-         - DE15 3006 0601 0505 7807 80
+ #        - DE15 3006 0601 0505 7807 80
      -
        name: BANK
        initialString: 'Bank:'
