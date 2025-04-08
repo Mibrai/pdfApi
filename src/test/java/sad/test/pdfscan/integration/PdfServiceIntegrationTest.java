@@ -93,14 +93,16 @@ public class PdfServiceIntegrationTest {
 
     @Test
     void checkBlacklistedIbanExistTest(){
-        blackListedProperties.getIbans().add("DE15 3006 0601 0505 7807 80");
+        List<CheckElement> checkElementList = loadListElement();
+        checkElementList.stream().filter(checkElement -> checkElement.getName().equalsIgnoreCase("IBAN"))
+                .findFirst().get().getBlacklisted().add("DE15 3006 0601 0505 7807 80");
         ResponseEntity response = pdfService.checkSpecifications(
                 null,
                 Constants.FILE_URL + "Testdata_Invoices.pdf",
                 defaultSpecificationProperties,
                 blackListedProperties,
                 countriesSpecificationProperties,
-                loadListElement());
+                checkElementList);
 
         Truth.assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     }

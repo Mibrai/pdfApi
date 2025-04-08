@@ -1,14 +1,14 @@
-defaults-spec-properties:
+defaults-iban-properties:
   country: DE
   size: 22
   withWhiteSpace: false
-countries-spec-properties:
+countries-iban-properties:
   country:
     -
       name: Deuscthland
       code: DE
       size: 22
-      withWhiteSpace: true
+      withWhiteSpace: false
     -
       name: Belgium
       code: BE
@@ -25,30 +25,35 @@ countries-spec-properties:
       size: 22
       withWhiteSpace: true
 black-listed:
-  ibans:
-    - DE00000000033333333343441
-    - DE27983773766664555355
-    - DE27 9837 7376 6664 5553 50
-    - DE15 3006 0601 0505 7807 80
   countries:
     - BE
     - FR
 check-specification:
    activeElementsToCheck:
      -  IBAN
+#     -  BLZ
+#     -  BANK
+#    -  KONTO
+#     -  BIC
    elements:
      -
        name: IBAN
        initialString: 'IBAN:'
        lastString: 'SWIFT'
-       size: 22
+       minSize: 22
+       maxSize: 22
        withWhiteSpace: true
        blacklisted:
+         - DE00000000033333333343441
+         - DE27983773766664555355
+         - DE27 9837 7376 6664 5553 50
+ #        - DE15 3006 0601 0505 7807 80
      -
        name: BANK
        initialString: 'Bank:'
        lastString: 'Konto'
-       size: 15
+       minSize: 10
+       maxSize: 30
        withWhiteSpace: true
        blacklisted:
          - TARGO BANK
@@ -57,24 +62,37 @@ check-specification:
        name: BLZ
        initialString: 'BLZ:'
        lastString: '\n'
-       size: 22
-       withWhiteSpace: true
+       minSize: 10
+       maxSize: 10
+       withWhiteSpace:
        blacklisted:
-         - 250 800 01
+         - 250 906 08
      -
        name: EMPFAENGER
        initialString: 'Empfänger:'
        lastString: 'IBAN'
-       size: 60
-       withWhiteSpace: true
+       minSize:
+       maxSize:
+       withWhiteSpace:
        blacklisted:
          - Neo Anderson
          - Morpheus
      -
        name: BIC
-       initialString: 'SWIFT/BIC'
+       initialString: 'SWIFT/BIC:'
        lastString: '\n'
-       size: 22
-       withWhiteSpace: true
+       minSize: 8
+       maxSize: 8
+       withWhiteSpace:
        blacklisted:
+         -  DAEDEDDBBDC
+     -
+       name: KONTO
+       initialString: 'Konto'
+       lastString: 'BLZ'
+       minSize: 8
+       maxSize: 25
+       withWhiteSpace:
+       blacklisted:
+         -  05 05 780780
 

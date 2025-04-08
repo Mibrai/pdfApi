@@ -9,7 +9,7 @@ import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "check-specification")
+@ConfigurationProperties(prefix = "check-specification",ignoreInvalidFields = true, ignoreUnknownFields = true)
 public class CheckSpecifications {
     private List<String> activeElementsToCheck;
     private List<CheckElement> elements;

@@ -5,14 +5,15 @@ import lombok.Data;
 
 import java.util.List;
 
-@Data
 @Builder
+@Data
 public class CheckElement {
     private String name;
     private String initialString;
     private String lastString;
 
-    private long size;
+    private long minSize;
+    private long maxSize;
     private boolean withWhiteSpace;
     private List<String> blacklisted;
 
@@ -40,14 +41,6 @@ public class CheckElement {
         this.lastString = lastString;
     }
 
-    public long getSize() {
-        return size;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
-    }
-
     public boolean isWithWhiteSpace() {
         return withWhiteSpace;
     }
@@ -58,6 +51,22 @@ public class CheckElement {
 
     public List<String> getBlacklisted() {
         return blacklisted;
+    }
+
+    public long getMinSize() {
+        return minSize;
+    }
+
+    public void setMinSize(long minSize) {
+        this.minSize = minSize;
+    }
+
+    public long getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(long maxSize) {
+        this.maxSize = maxSize;
     }
 
     public void setBlacklisted(List<String> blacklisted) {

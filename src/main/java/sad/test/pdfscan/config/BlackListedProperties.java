@@ -8,19 +8,9 @@ import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "black-listed")
+@ConfigurationProperties(prefix = "black-listed",ignoreInvalidFields = true, ignoreUnknownFields = true)
 public class BlackListedProperties {
-    private List<String> ibans;
     private List<String> countries;
-
-    public List<String> getIbans() {
-        return ibans;
-    }
-
-    public void setIbans(List<String> ibans) {
-        this.ibans = ibans;
-    }
-
     public List<String> getCountries() {
         return countries;
     }
