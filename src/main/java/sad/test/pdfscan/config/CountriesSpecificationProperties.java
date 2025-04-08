@@ -9,7 +9,7 @@ import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "countries-spec-properties")
+@ConfigurationProperties(prefix = "countries-iban-properties",ignoreInvalidFields = true, ignoreUnknownFields = true)
 public class CountriesSpecificationProperties {
     private List<Country> country;
 

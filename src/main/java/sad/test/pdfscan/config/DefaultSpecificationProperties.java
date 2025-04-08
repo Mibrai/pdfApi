@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "defaults-spec-properties")
+@ConfigurationProperties(prefix = "defaults-iban-properties",ignoreInvalidFields = true, ignoreUnknownFields = true)
 public class DefaultSpecificationProperties {
     private String country;
     private long size;

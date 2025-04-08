@@ -2,6 +2,7 @@ package sad.test.pdfscan.utils;
 
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
+import org.springframework.context.MessageSource;
 import sad.test.pdfscan.config.BlackListedProperties;
 import sad.test.pdfscan.config.CountriesSpecificationProperties;
 import sad.test.pdfscan.config.DefaultSpecificationProperties;
@@ -10,10 +11,7 @@ import sad.test.pdfscan.model.Country;
 
 import javax.imageio.IIOException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class StringUtils {
     /**
@@ -55,23 +53,24 @@ public class StringUtils {
                                      final String element,
                                      final CheckElement checkElement){
 
-        if(checkElement.getName().contains(Constants.IBAN)){
-            if(defaultSpecificationProperties != null &&
-                    element != null &&
-                    !element.isBlank() &&
-                    defaultSpecificationProperties.getCountry().equalsIgnoreCase(element.substring(0,2))){
-                if(defaultSpecificationProperties.isWithWhiteSpace()){
-                    return element.replaceAll(" ","").length() == defaultSpecificationProperties.getSize();
-                } else {
-                    return element.length() == (defaultSpecificationProperties.getSize() + (int)(defaultSpecificationProperties.getSize() / 4));
+        switch (checkElement.getName()){
+            case Constants.IBAN :
+                if(defaultSpecificationProperties != null &&
+                        element != null && !element.isBlank()){
+                    if(defaultSpecificationProperties.getCountry().equalsIgnoreCase(element.substring(0,2)))
+                        if(defaultSpecificationProperties.isWithWhiteSpace()){
+                            return element.length() == defaultSpecificationProperties.getSize();
+                        } else {
+                            return element.replaceAll(" ","").length() == defaultSpecificationProperties.getSize();
+                        }
                 }
-            }
+                break;
+            case Constants.BANK:
+                return element.length() >= checkElement.getMinSize() && element.length() <= checkElement.getMaxSize();
+            //another test can be performed here as you like
+            default:
+                return false;
         }
-
-        if(!checkElement.getName().contains(Constants.IBAN)){
-            return element.length() == checkElement.getSize();
-        }
-
         return false;
     }
 
@@ -98,19 +97,22 @@ public class StringUtils {
      * @param blackListedProperties
      * @return
      */
-    public static boolean isBlackListed(final String element, final BlackListedProperties blackListedProperties){
+    public static boolean isBlackListed(final String countryCode,
+                                        final String element,
+                                        final BlackListedProperties blackListedProperties,
+                                        final CheckElement checkElement){
         boolean state = false;
 
         if(element == null || element.isBlank())
             return false;
 
-        String blockIban = element.trim().replaceAll(" ","");
+        String blockElement = element.trim().replaceAll(" ","");
 
-        if(blackListedProperties.getIbans().contains(blockIban) ||
-                blackListedProperties.getIbans().contains(element.trim()))
+        if(checkElement.getBlacklisted().contains(blockElement) ||
+                checkElement.getBlacklisted().contains(element.trim()))
             state = true;
 
-        if(blackListedProperties.getCountries().contains(element.trim().substring(0,2)))
+        if(countryCode != null && blackListedProperties.getCountries().contains(countryCode.trim().toUpperCase()))
             state = true;
 
         return state;
@@ -152,7 +154,7 @@ public class StringUtils {
     }
 
     /**
-     *
+     * Read PDF file and retun all pages in List-Items form
      * @param pdfReader
      * @return
      */
@@ -168,5 +170,51 @@ public class StringUtils {
         }
 
         return pdfTexts;
+    }
+
+    /**
+     * Concatenate valid Message to show when the api is called
+     * @param countryCode
+     * @param defaultSpecificationProperties
+     * @param countriesSpecificationProperties
+     * @param checkElement
+     * @param messageSource
+     * @param locale
+     * @return
+     */
+    public static String getSpecMessage(final String countryCode, final DefaultSpecificationProperties defaultSpecificationProperties,
+                                        final CountriesSpecificationProperties countriesSpecificationProperties,
+                                        final CheckElement checkElement,
+                                        final MessageSource messageSource,
+                                        final Locale locale){
+        StringBuilder messageBuilder = new StringBuilder();
+        switch (checkElement.getName()){
+            case Constants.IBAN :
+                if (countryCode != null && !countryCode.isBlank() && countriesSpecificationProperties != null) {
+                    Optional<Country> country = countriesSpecificationProperties.getCountry().stream()
+                            .filter(country1 -> country1.getCode().equalsIgnoreCase(countryCode)).findFirst();
+                    if (!country.isEmpty()){
+                        messageBuilder.append(messageSource.getMessage("log.spec.message.country",new Object[]{country.get().getName()},locale));
+                        messageBuilder.append("Code : "+country.get().getCode()+"\n");
+                        messageBuilder.append(messageSource.getMessage("log.spec.message.iban.length",new Object[]{country.get().getSize()},locale));
+                        messageBuilder.append(messageSource.getMessage("log.spec.message.whitespace",new Object[]{country.get().isWithWhiteSpace()},locale));
+                        messageBuilder.append(Constants.LINE);
+                    }  else {
+                        messageBuilder.append("Country Code : "+defaultSpecificationProperties.getCountry()+"\n");
+                        messageBuilder.append(messageSource.getMessage("log.spec.message.iban.length",new Object[]{defaultSpecificationProperties.getSize()},locale));
+                        messageBuilder.append(messageSource.getMessage("log.spec.message.whitespace",new Object[]{defaultSpecificationProperties.isWithWhiteSpace()},locale));
+                        messageBuilder.append(Constants.LINE);
+                    }
+                }
+                break;
+            default:
+                messageBuilder.append(messageSource.getMessage("log.spec.message.size.min",new Object[]{checkElement.getMinSize()},locale));
+                messageBuilder.append(messageSource.getMessage("log.spec.message.size.max",new Object[]{checkElement.getMaxSize()},locale));
+                messageBuilder.append(messageSource.getMessage("log.spec.message.whitespace",new Object[]{checkElement.isWithWhiteSpace()},locale));
+                messageBuilder.append(Constants.LINE);
+                break;
+        }
+
+        return messageBuilder.toString();
     }
 }

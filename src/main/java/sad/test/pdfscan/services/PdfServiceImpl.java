@@ -1,7 +1,6 @@
 package sad.test.pdfscan.services;
 
 import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import org.apache.commons.io.FileDeleteStrategy;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
@@ -75,7 +74,7 @@ public class PdfServiceImpl implements  PdfService{
                                             checkElement);
 
                                     if(matchSpec){
-                                        if(StringUtils.isBlackListed(extractedElementInfo,blackListedProperties))
+                                        if(StringUtils.isBlackListed(countryCode,extractedElementInfo,blackListedProperties,checkElement))
                                             if(!state.toString().contains(extractedElementInfo))
                                                 state.append(messageSource.getMessage("log.blacklisted",
                                                         new Object[]{checkElement.getName() + ": ",extractedElementInfo},
@@ -83,7 +82,15 @@ public class PdfServiceImpl implements  PdfService{
                                     } else {
                                         if(!state.toString().contains(extractedElementInfo))
                                             state.append(messageSource.getMessage("log.nomatch",
-                                                    new Object[]{extractedElementInfo,checkElement.getName()},
+                                                    new Object[]{extractedElementInfo,checkElement.getName(),checkElement.getName(),
+                                                            StringUtils.getSpecMessage(
+                                                            countryCode,
+                                                            defaultSpecificationProperties,
+                                                            countriesSpecificationProperties,
+                                                            checkElement,
+                                                            messageSource,
+                                                            locale
+                                                    )},
                                                     locale));
                                     }
                                 }
