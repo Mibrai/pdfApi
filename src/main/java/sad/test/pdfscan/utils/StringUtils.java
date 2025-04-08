@@ -65,11 +65,12 @@ public class StringUtils {
                         }
                 }
                 break;
-            case Constants.BANK:
-                return element.length() >= checkElement.getMinSize() && element.length() <= checkElement.getMaxSize();
-            //another test can be performed here as you like
+           /* case Constants.BIC:
+                if(checkElement.getMinSize() != 0 && checkElement.getMaxSize() != 0)
+                    return element.length() <= checkElement.getMaxSize();
+                another test can be specified  here as you like: e.g : BIC, KONTO, etc.. */
             default:
-                return false;
+                return element.length() >= checkElement.getMinSize() && element.length() <= checkElement.getMaxSize();
         }
         return false;
     }

@@ -63,7 +63,7 @@ public class PdfServiceImpl implements  PdfService{
                                 int initStringPosition = pageText.indexOf(checkElement.getInitialString());
 
                                 if(initStringPosition != -1){
-                                    int endStringPosition = pageText.indexOf(checkElement.getLastString());
+                                    int endStringPosition = checkElement.getLastString().equalsIgnoreCase("\\n") ? (int)(initStringPosition + (checkElement.getInitialString().length() + 1 ) + (checkElement.getMaxSize() + 1)) : pageText.indexOf(checkElement.getLastString());
                                     String element = pageText.substring(initStringPosition,endStringPosition).trim();
                                     String extractedElementInfo = StringUtils.extractElementInfos(element,checkElement.getInitialString());
                                     boolean matchSpec = StringUtils.elementMatchCountrySpec(

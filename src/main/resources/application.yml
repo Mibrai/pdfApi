@@ -31,7 +31,10 @@ black-listed:
 check-specification:
    activeElementsToCheck:
      -  IBAN
+     -  BLZ
      -  BANK
+     -  KONTO
+     -  BIC
    elements:
      -
        name: IBAN
@@ -59,11 +62,11 @@ check-specification:
        name: BLZ
        initialString: 'BLZ:'
        lastString: '\n'
-       minSize: 22
-       maxSize: 22
+       minSize: 10
+       maxSize: 10
        withWhiteSpace:
        blacklisted:
-         - 250 800 01
+         - 250 906 08
      -
        name: EMPFAENGER
        initialString: 'Empfänger:'
@@ -76,10 +79,20 @@ check-specification:
          - Morpheus
      -
        name: BIC
-       initialString: 'SWIFT/BIC'
+       initialString: 'SWIFT/BIC:'
        lastString: '\n'
-       minSize:
-       maxSize:
+       minSize: 8
+       maxSize: 8
        withWhiteSpace:
        blacklisted:
+         -  DAEDEDDBBDC
+     -
+       name: KONTO
+       initialString: 'Konto'
+       lastString: 'BLZ'
+       minSize: 8
+       maxSize: 25
+       withWhiteSpace:
+       blacklisted:
+         -  05 05 780780
 
